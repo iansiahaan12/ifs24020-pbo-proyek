@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="id">
+  <body>
+    <!-- Modal Edit Cash Flow -->
+    <div
+      th:fragment="editCashFlowModal"
+      class="modal fade"
+      id="editCashFlowModal"
+      tabindex="-1"
+      aria-labelledby="editCashFlowModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editCashFlowModalLabel">
+              Edit Cash Flow
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <form th:action="@{/cashflows/edit}" method="post">
+            <div class="modal-body">
+              <!-- Alert Error -->
+              <div
+                th:if="${error}"
+                class="alert alert-danger alert-dismissible fade show"
+                role="alert"
+              >
+                <span th:text="${error}"></span>
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="alert"
+                  aria-label="Close"
+                ></button>
+              </div>
+
+              <!-- Hidden ID -->
+              <input type="hidden" id="editCashFlowId" name="id" />
+
+              <!-- Form Tipe -->
+              <div class="mb-3">
+                <label for="editCashFlowType" class="form-label">
+                  Tipe <span class="text-danger">*</span>
+                </label>
+                <select
+                  class="form-select"
+                  id="editCashFlowType"
+                  name="type"
+                  required
+                >
+                  <option value="">Pilih tipe</option>
+                  <option value="Inflow">Pemasukan</option>
+                  <option value="Outflow">Pengeluaran</option>
+                </select>
+              </div>
+
+              <!-- Form Sumber -->
+              <div class="mb-3">
+                <label for="editCashFlowSource" class="form-label">
+                  Sumber <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="editCashFlowSource"
+                  name="source"
+                  placeholder="Contoh: Gaji, Tabungan, Cash"
+                  required
+                />
+              </div>
+
+              <!-- Form Label -->
+              <div class="mb-3">
+                <label for="editCashFlowLabel" class="form-label">
+                  Label <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="editCashFlowLabel"
+                  name="label"
+                  placeholder="Contoh: gaji-bulanan, alat-mandi"
+                  required
+                />
+              </div>
+
+              <!-- Form Jumlah -->
+              <div class="mb-3">
+                <label for="editCashFlowAmount" class="form-label">
+                  Jumlah <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="editCashFlowAmount"
+                  name="amount"
+                  placeholder="Contoh: 100000"
+                  min="1"
+                  required
+                />
+              </div>
+
+              <!-- Form Deskripsi -->
+              <div class="mb-3">
+                <label for="editCashFlowDescription" class="form-label">
+                  Deskripsi <span class="text-danger">*</span>
+                </label>
+                <textarea
+                  class="form-control"
+                  id="editCashFlowDescription"
+                  name="description"
+                  rows="3"
+                  placeholder="Deskripsi cash flow"
+                  required
+                ></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Batal
+              </button>
+              <button type="submit" class="btn btn-warning">Update</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

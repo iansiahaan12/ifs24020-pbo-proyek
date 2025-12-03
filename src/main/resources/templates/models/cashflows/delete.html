@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="id">
+  <body>
+    <!-- Modal Delete Cash Flow -->
+    <div
+      th:fragment="deleteCashFlowModal"
+      class="modal fade"
+      id="deleteCashFlowModal"
+      tabindex="-1"
+      aria-labelledby="deleteCashFlowModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteCashFlowModalLabel">
+              Hapus Cash Flow
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <form th:action="@{/cashflows/delete}" method="post">
+            <div class="modal-body">
+              <!-- Alert Error -->
+              <div
+                th:if="${error}"
+                class="alert alert-danger alert-dismissible fade show"
+                role="alert"
+              >
+                <span th:text="${error}"></span>
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="alert"
+                  aria-label="Close"
+                ></button>
+              </div>
+
+              <!-- Hidden ID -->
+              <input type="hidden" id="deleteCashFlowId" name="id" />
+
+              <!-- Konfirmasi Hapus -->
+              <div class="alert alert-warning" role="alert">
+                <strong>Peringatan!</strong> Tindakan ini tidak dapat dibatalkan.
+              </div>
+
+              <p>
+                Apakah Anda yakin ingin menghapus cash flow dengan sumber
+                <strong id="deleteCashFlowSource"></strong>?
+              </p>
+
+              <!-- Form Konfirmasi Sumber -->
+              <div class="mb-3">
+                <label for="deleteCashFlowConfirmSource" class="form-label">
+                  Ketik nama sumber untuk konfirmasi
+                  <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="deleteCashFlowConfirmSource"
+                  name="confirmSource"
+                  placeholder="Masukkan nama sumber"
+                  required
+                />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Batal
+              </button>
+              <button type="submit" class="btn btn-danger">Hapus</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/base}" lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cash Flow</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<style>
+.card-hover {
+ transition: 0.25s ease;
+ border-radius: 16px;
+}
+.card-hover:hover {
+ transform: translateY(-4px);
+ box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+.summary-income {
+ background: linear-gradient(135deg, #43e97b, #38f9d7);
+ color: white;
+}
+.summary-expense {
+ background: linear-gradient(135deg, #fa709a, #fee140);
+ color: white;
+}
+.summary-balance {
+ background: linear-gradient(135deg, #6a11cb, #2575fc);
+ color: white;
+}
+.currency-input {
+ position: relative;
+}
+.currency-input::before {
+ content: "Rp";
+ position: absolute;
+ left: 12px;
+ top: 50%;
+ transform: translateY(-50%);
+ color: #6c757d;
+ font-weight: 500;
+ z-index: 10;
+}
+.currency-input input {
+ padding-left: 45px;
+}
+.form-text {
+ font-size: 0.875rem;
+ color: #6c757d;
+ margin-top: 0.25rem;
+}
+.form-label {
+ font-weight: 500;
+ margin-bottom: 0.5rem;
+}
+.form-label.required::after {
+ content: " *";
+ color: #dc3545;
+}
+</style>
+</head>
+<body>
+<div layout:fragment="content" class="mt-3">
+<div class="card card-hover">
+<div class="card-header d-flex align-items-center justify-content-between py-3">
+ <h4 class="m-0">Hai, [[${auth.name}]] 👋</h4>
+ <div class="d-flex align-items-center gap-3">
+ <a th:href="@{/auth/logout}" class="btn btn-outline-danger btn-sm px-3"><i class="bi bi-box-arrow-right"></i> Keluar</a>
+ </div>
+</div>
+<div class="card-body">
+<div class="d-flex mb-3 align-items-center justify-content-between">
+<h3 class="m-0">Daftar Cash Flow</h3>
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCashFlowModal"><i class="bi bi-plus-circle"></i> Tambah Cash Flow</button>
+</div>
+<table class="table table-hover align-middle shadow-sm rounded bg-white" id="cashflowTable">
+<thead>
+<tr class="table-light">
+ <th>No</th>
+ <th>Tipe</th>
+ <th>Sumber</th>
+ <th>Label</th>
+ <th>Jumlah (Rp)</th>
+ <th>Dibuat pada</th>
+ <th>Tindakan</th>
+</tr>
+</thead>
+<tbody>
+<tr th:each="cashFlow, status : ${cashFlows}" class="table-row-hover">
+ <td th:text="${status.index + 1}"></td>
+ <td><span th:if="${cashFlow.type == 'Inflow'}" class="badge bg-success rounded-pill px-3 py-2">Pemasukan</span><span th:if="${cashFlow.type == 'Outflow'}" class="badge bg-danger rounded-pill px-3 py-2">Pengeluaran</span></td>
+ <td th:text="${cashFlow.source}"></td>
+ <td><span class="badge bg-secondary rounded-pill px-3 py-2" th:text="${cashFlow.label}"></span></td>
+ <td th:text="${'Rp ' + #numbers.formatDecimal(cashFlow.amount, 0, 'COMMA', 0, 'POINT')}"></td>
+ <td th:text="${#temporals.format(cashFlow.createdAt, 'd MMMM yyyy, HH:mm')}"></td>
+ <td class="d-flex gap-2">
+ <a th:href="@{/cashflows/{cashFlowId}(cashFlowId=${cashFlow.id})}" class="btn btn-sm btn-info"><i class="bi bi-eye"></i></a>
+ <button class="btn btn-sm btn-warning" th:data-id="${cashFlow.id}" th:data-type="${cashFlow.type}" th:data-source="${cashFlow.source}" th:data-label="${cashFlow.label}" th:data-amount="${cashFlow.amount}" th:data-description="${cashFlow.description}" onclick="prepareEditCashFlow(this)"><i class="bi bi-pencil"></i></button>
+ <button class="btn btn-sm btn-danger" th:data-id="${cashFlow.id}" th:data-source="${cashFlow.source}" onclick="prepareDeleteCashFlow(this)"><i class="bi bi-trash"></i></button>
+ </td>
+</tr>
+<tr th:if="${#lists.isEmpty(cashFlows)}"><td colspan="7" class="text-center py-4 text-muted">Belum ada data cash flow.</td></tr>
+</tbody>
+</table>
+<div class="row mt-4 g-3">
+ <div class="col-md-4"><div class="card shadow-sm border-0 summary-income card-hover"><div class="card-body"><h6>Total Pemasukan</h6><h2 th:text="${'Rp ' + #numbers.formatDecimal(totalInflow, 0, 'COMMA', 0, 'POINT')}"></h2></div></div></div>
+ <div class="col-md-4"><div class="card shadow-sm border-0 summary-expense card-hover"><div class="card-body"><h6>Total Pengeluaran</h6><h2 th:text="${'Rp ' + #numbers.formatDecimal(totalOutflow, 0, 'COMMA', 0, 'POINT')}"></h2></div></div></div>
+ <div class="col-md-4"><div class="card shadow-sm border-0 summary-balance card-hover"><div class="card-body"><h6>Saldo</h6><h2 th:text="${'Rp ' + #numbers.formatDecimal(balance, 0, 'COMMA', 0, 'POINT')}"></h2></div></div></div>
+</div>
+</div>
+</div>
+
+<!-- Modal Tambah Cash Flow dengan Debug -->
+<div class="modal fade" id="addCashFlowModal" tabindex="-1" aria-labelledby="addCashFlowModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCashFlowModalLabel">Tambah Cash Flow</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Coba berbagai endpoint -->
+                <form th:action="@{/cashflows/add}" method="post" id="cashFlowForm">
+                    <!-- CSRF Token -->
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    
+                    <div class="mb-4">
+                        <label for="cashFlowType" class="form-label required">Tipe</label>
+                        <select class="form-select" id="cashFlowType" name="type" required>
+                            <option value="">Pilih tipe</option>
+                            <option value="Inflow">Pemasukan</option>
+                            <option value="Outflow">Pengeluaran</option>
+                        </select>
+                        <div class="form-text">
+                            <strong>Contoh:</strong> Gaji, Tabungan, Cash
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="cashFlowSource" class="form-label required">Sumber</label>
+                        <input type="text" class="form-control" id="cashFlowSource" name="source" placeholder="Masukkan sumber cash flow" required>
+                        <div class="form-text">
+                            <strong>Contoh:</strong> Gaji Bulanan, Belanja Bulanan, Investasi
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="cashFlowLabel" class="form-label required">Label</label>
+                        <input type="text" class="form-control" id="cashFlowLabel" name="label" placeholder="Masukkan label" required>
+                        <div class="form-text">
+                            <strong>Contoh:</strong> gaji-bulanan, alat-mandi, belanja-dapur
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="cashFlowAmount" class="form-label required">Jumlah</label>
+                        <div class="currency-input">
+                            <input type="number" class="form-control" id="cashFlowAmount" name="amount" min="0" step="100" placeholder="0" required>
+                        </div>
+                        <div class="form-text">
+                            <strong>Contoh:</strong> 100000
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="cashFlowDescription" class="form-label required">Deskripsi</label>
+                        <textarea class="form-control" id="cashFlowDescription" name="description" rows="3" placeholder="Deskripsi cash flow" required></textarea>
+                        <div class="form-text">
+                            Deskripsi detail mengenai cash flow ini
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Debug script
+document.getElementById('cashFlowForm')?.addEventListener('submit', function(e) {
+    console.log('Form submitted to:', this.action);
+    console.log('Method:', this.method);
+    
+    const formData = new FormData(this);
+    console.log('Form data:');
+    for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+    }
+});
+</script>
+</body>
+</html>

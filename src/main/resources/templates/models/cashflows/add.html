@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="id">
+  <body>
+    <!-- Modal Add Cash Flow -->
+    <div
+      th:fragment="addCashFlowModal"
+      class="modal fade"
+      id="addCashFlowModal"
+      tabindex="-1"
+      aria-labelledby="addCashFlowModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addCashFlowModalLabel">
+              Tambah Cash Flow
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <form th:action="@{/cashflows/add}" method="post">
+            <div class="modal-body">
+              <!-- Alert Error -->
+              <div
+                th:if="${error}"
+                class="alert alert-danger alert-dismissible fade show"
+                role="alert"
+              >
+                <span th:text="${error}"></span>
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="alert"
+                  aria-label="Close"
+                ></button>
+              </div>
+
+              <!-- Form Tipe -->
+              <div class="mb-3">
+                <label for="addCashFlowType" class="form-label">
+                  Tipe <span class="text-danger">*</span>
+                </label>
+                <select
+                  class="form-select"
+                  id="addCashFlowType"
+                  name="type"
+                  required
+                >
+                  <option value="" selected>Pilih tipe</option>
+                  <option value="Inflow">Pemasukan</option>
+                  <option value="Outflow">Pengeluaran</option>
+                </select>
+              </div>
+
+              <!-- Form Sumber -->
+              <div class="mb-3">
+                <label for="addCashFlowSource" class="form-label">
+                  Sumber <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="addCashFlowSource"
+                  name="source"
+                  placeholder="Contoh: Gaji, Tabungan, Cash"
+                  required
+                />
+              </div>
+
+              <!-- Form Label -->
+              <div class="mb-3">
+                <label for="addCashFlowLabel" class="form-label">
+                  Label <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="addCashFlowLabel"
+                  name="label"
+                  placeholder="Contoh: gaji-bulanan, alat-mandi"
+                  required
+                />
+              </div>
+
+              <!-- Form Jumlah -->
+              <div class="mb-3">
+                <label for="addCashFlowAmount" class="form-label">
+                  Jumlah <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="addCashFlowAmount"
+                  name="amount"
+                  placeholder="Contoh: 100000"
+                  min="1"
+                  required
+                />
+              </div>
+
+              <!-- Form Deskripsi -->
+              <div class="mb-3">
+                <label for="addCashFlowDescription" class="form-label">
+                  Deskripsi <span class="text-danger">*</span>
+                </label>
+                <textarea
+                  class="form-control"
+                  id="addCashFlowDescription"
+                  name="description"
+                  rows="3"
+                  placeholder="Deskripsi cash flow"
+                  required
+                ></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Batal
+              </button>
+              <button type="submit" class="btn btn-primary">Simpan</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
