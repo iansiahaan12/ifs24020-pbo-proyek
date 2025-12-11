@@ -1,120 +1,198 @@
 <!DOCTYPE html>
-<html
-  xmlns:th="http://www.thymeleaf.org"
-  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-  layout:decorate="~{layouts/base}"
->
-  <head>
-    <title>Masuk - Spring Boot Todolist</title>
-  </head>
-  <body>
-    <div layout:fragment="content" class="mt-5">
-      <form
-        th:action="@{/auth/login/post}"
-        method="post"
-        th:object="${loginForm}"
-      >
-        <div class="card mx-auto" style="max-width: 360px">
-          <div class="card-body">
-            <div>
-              <div class="text-center">
-                <img
-                  th:src="@{/assets/images/this.png}"
-                  alt="Logo"
-                  width="64"
-                />
-                <hr />
-                <h5>Masuk</h5>
-                <span class="text-muted">
-                  Masuk menggunakan kredensial akun Anda untuk melanjutkan
-                </span>
-                <hr />
-              </div>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masuk - My Collection</title>
+    
+    <!-- 1. GANTI LOGO TAB BROWSER (FAVICON) DI SINI -->
+    <link rel="icon" type="image/png" th:href="@{/assets/images/logo-circle.png}">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+   <style>
+        body, html { 
+            height: 100%; 
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-              <!-- Pesan Error Global -->
-              <div
-                th:if="${#fields.hasGlobalErrors()}"
-                class="alert alert-danger"
-              >
-                <th:block
-                  th:each="err : ${#fields.globalErrors()}"
-                  th:text="${err}"
-                ></th:block>
-              </div>
+        .login-bg {
+            background: 
+                linear-gradient(135deg, rgba(13, 253, 237, 0.8) 0%, rgba(6, 64, 133, 0.9) 100%),
+                url('https://images.unsplash.com/photo-1555529733-0e670560f7e1?q=80&w=2070&auto=format&fit=crop'); 
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
 
-              <!-- Alamat Email -->
-              <div class="form-group mb-3">
-                <label for="inputEmail">Email</label>
-                <input
-                  type="email"
-                  class="form-control"
-                  id="inputEmail"
-                  th:field="*{email}"
-                  th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'"
-                  autocomplete="email"
-                />
-                <div
-                  th:if="${#fields.hasErrors('email')}"
-                  class="invalid-feedback"
-                >
-                  <th:block
-                    th:each="err : ${#fields.errors('email')}"
-                    th:text="${err}"
-                  ></th:block>
+        .login-card {
+            background-color: #e3f2fd; /* Biru muda yang sangat lembut (ganti #cce0fe jika terlalu gelap) */
+            width: 100%;
+            max-width: 420px;
+            border-radius: 15px;
+            padding: 2.5rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            
+            position: relative; 
+            overflow: hidden; 
+        }
+
+        /* --- SETTING WATERMARK --- */
+        .login-card::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 47%;
+            width: 120%; 
+            height: 120%;
+            
+            /* Path Logo Anda */
+            background-image: url('/assets/images/logo.png'); 
+            
+            background-size: contain; 
+            background-repeat: no-repeat;
+            background-position: center;
+            transform: translate(-50%, -50%) rotate(-10deg);
+            opacity: 0.15; /* Sedikit dinaikkan agar pas dengan warna kartu */
+            mix-blend-mode: multiply;
+            z-index: 0;  
+            pointer-events: none;
+        }
+
+        .login-header, form, .alert, .text-center {
+            position: relative;
+            z-index: 2; 
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .icon-box {
+            width: 70px; /* Diperbesar sedikit agar logo muat */
+            height: 70px;
+            background-color: #ffffff; /* Ganti jadi putih agar logo menonjol */
+            color: #0d6efd;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px auto;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* Tambah bayangan di lingkaran logo */
+        }
+
+        /* Styling agar gambar logo di dalam lingkaran pas */
+        .icon-box img {
+            width: 78px; 
+            height: 78px; 
+            object-fit: contain;
+        }
+
+        .form-control {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            background-color: rgba(255, 255, 255, 0.9); 
+        }
+        
+        .form-control:focus {
+            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15);
+            border-color: #86b7fe;
+            background-color: #fff;
+        }
+
+        .form-floating > label { padding-top: 10px; }
+        
+        .btn-primary {
+            padding: 12px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-bg">
+        <div class="login-card">
+            
+            <!-- Header -->
+            <div class="login-header">
+                <div class="icon-box">
+                    <!-- 2. GANTI ICON FONT DENGAN GAMBAR LOGO ANDA -->
+                    <img th:src="@{/assets/images/this.png}" alt="Logo Aplikasi">
                 </div>
-              </div>
-
-              <!-- Kata Sandi -->
-              <div class="form-group mb-3">
-                <label for="inputPassword">Kata Sandi</label>
-                <input
-                  type="password"
-                  class="form-control"
-                  id="inputPassword"
-                  th:field="*{password}"
-                  th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'"
-                  autocomplete="current-password"
-                />
-                <div
-                  th:if="${#fields.hasErrors('password')}"
-                  class="invalid-feedback"
-                >
-                  <th:block
-                    th:each="err : ${#fields.errors('password')}"
-                    th:text="${err}"
-                  ></th:block>
-                </div>
-              </div>
-
-              <!-- Remember Me -->
-              <div class="form-group mb-3 form-check">
-                <input
-                  type="checkbox"
-                  class="form-check-input"
-                  id="optionRememberMe"
-                  th:field="*{rememberMe}"
-                />
-                <label class="form-check-label" for="optionRememberMe"
-                  >Ingat saya</label
-                >
-              </div>
-
-              <!-- Tombol Masuk -->
-              <div class="form-group mt-3 text-end">
-                <button type="submit" class="btn btn-primary btn-block">
-                  Masuk
-                </button>
-              </div>
-
-              <hr />
-              <p class="text-center">
-                Belum memiliki akun?
-                <a th:href="@{/auth/register}">Daftar</a>
-              </p>
+                <h3 class="fw-bold text-dark">Selamat Datang! 👋</h3>
+                <p class="text-muted small">Masuk untuk mengelola koleksi Anda</p>
             </div>
-          </div>
+
+            <!-- Alerts -->
+            <div th:if="${param.error}" class="alert alert-danger d-flex align-items-center small py-2" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <div>Email atau kata sandi salah!</div>
+            </div>
+            <div th:if="${param.logout}" class="alert alert-success d-flex align-items-center small py-2" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <div>Anda telah berhasil keluar.</div>
+            </div>
+            <div th:if="${success}" class="alert alert-success d-flex align-items-center small py-2">
+                <i class="fas fa-check-circle me-2"></i>
+                <span th:text="${success}"></span>
+            </div>
+
+            <!-- Form -->
+            <form th:action="@{/auth/login/post}" method="post" th:object="${loginForm}">
+                
+                <div class="form-floating mb-3">
+                    <input type="email" class="form-control" id="email" th:field="*{email}" 
+                           placeholder="name@example.com" 
+                           th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
+                    <label for="email">Email Address</label>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <input type="password" class="form-control" id="password" th:field="*{password}" 
+                           placeholder="Password"
+                           th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">
+                    <label for="password">Kata Sandi</label>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="rememberMe" th:field="*{rememberMe}">
+                        <label class="form-check-label text-muted small" for="rememberMe">Ingat saya</label>
+                    </div>
+                    <a href="#" class="text-primary text-decoration-none small fw-bold">Lupa Sandi?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 mb-3">Masuk Sekarang</button>
+                
+                <div class="text-center">
+                    <p class="text-muted small mb-0">Belum memiliki akun? 
+                        <a th:href="@{/auth/register}" class="fw-bold text-primary text-decoration-none">Daftar disini</a>
+                    </p>
+                </div>
+            </form>
         </div>
-      </form>
     </div>
-  </body>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 </html>

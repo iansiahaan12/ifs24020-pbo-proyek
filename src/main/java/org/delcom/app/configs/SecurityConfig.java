@@ -11,33 +11,56 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-        @Bean
-        SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-                http
-                                .exceptionHandling(ex -> ex
-                                                .authenticationEntryPoint((req, res, e) -> {
-                                                        res.sendRedirect("/auth/login");
-                                                }))
-                                .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers("/auth/**", "/assets/**", "/api/**",
-                                                                "/css/**", "/js/**")
-                                                .permitAll()
-                                                .anyRequest().authenticated())
 
-                                .formLogin(form -> form.disable())
-                                .logout(logout -> logout
-                                                .logoutSuccessUrl("/auth/login")
-                                                .permitAll())
-                                .rememberMe(remember -> remember
-                                                .key("uniqueAndSecret")
-                                                .tokenValiditySeconds(86400) // 24 jam
-                                );
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            // 1. CSRF (Boleh dimatikan untuk development, tapi idealnya dinyalakan untuk Form)
+            // Kita disable dulu agar tidak ribet dengan token
+            .csrf(csrf -> csrf.disable())
 
-                return http.build();
-        }
+            // 2. Atur izin URL
+            .authorizeHttpRequests(auth -> auth
+                // Izinkan akses ke folder public
+                .requestMatchers(
+                    "/auth/**", 
+                    "/css/**", 
+                    "/js/**", 
+                    "/images/**", 
+                    "/webjars/**",
+                    "/assets/**"  // <--- TAMBAHKAN INI (JANGAN LUPA KOMA DI BARIS ATASNYA)
+                ).permitAll()
+                
+                // Sisanya wajib login
+                .anyRequest().authenticated()
+            )
 
-        @Bean
-        public PasswordEncoder passwordEncoder() {
-                return new BCryptPasswordEncoder();
-        }
+            // 3. Konfigurasi Form Login (SESUAIKAN DISINI)
+            .formLogin(login -> login
+            .loginPage("/auth/login")
+            .loginProcessingUrl("/auth/login/post")
+            .usernameParameter("email")
+            .passwordParameter("password")
+            
+            // UBAH DARI "/items" MENJADI "/dashboard"
+            .defaultSuccessUrl("/dashboard", true) 
+            
+            .failureUrl("/auth/login?error=true")
+            .permitAll()
+        )
+
+            // 4. Konfigurasi Logout
+            .logout(logout -> logout
+                .logoutUrl("/auth/logout")
+                .logoutSuccessUrl("/auth/login?logout=true")
+                .permitAll()
+            );
+
+        return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }

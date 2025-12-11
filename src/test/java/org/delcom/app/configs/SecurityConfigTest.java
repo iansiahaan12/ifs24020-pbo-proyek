@@ -30,8 +30,10 @@ public class SecurityConfigTest {
 
         @Test
         void permitAll_forApiUrls() throws Exception {
-                mockMvc.perform(get("/api/test"))
-                                .andExpect(status().is4xxClientError());
+        mockMvc.perform(get("/api/test"))
+                .andExpect(status().is3xxRedirection())
+                // Ganti "http://localhost/auth/login" menjadi "/auth/login"
+                .andExpect(redirectedUrl("/auth/login")); 
         }
 
         @Test

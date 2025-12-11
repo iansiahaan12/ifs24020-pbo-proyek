@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" layout:decorate="~{layouts/base}">
+<head><title>Detail Barang</title></head>
+<body>
+<div layout:fragment="content">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="/items" class="btn btn-outline-secondary"><i class="fas fa-arrow-left"></i> Kembali</a>
+        <h4 class="text-primary fw-bold">Detail Koleksi</h4>
+    </div>
+
+    <!-- Notifikasi -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="row">
+        <!-- Kolom Gambar -->
+        <div class="col-md-5">
+            <div class="card shadow border-0">
+                <div class="card-body text-center p-0 overflow-hidden rounded">
+                    <!-- Tampilkan gambar jika ada, jika tidak gambar placeholder -->
+                    <img th:if="${item.imagePath != null}" th:src="@{/items/image/{file}(file=${item.imagePath})}" 
+                         class="img-fluid w-100" style="height: 350px; object-fit: cover;" alt="Gambar Barang">
+                    
+                    <div th:unless="${item.imagePath != null}" class="bg-light d-flex justify-content-center align-items-center" style="height: 350px;">
+                        <span class="text-muted"><i class="fas fa-image fa-3x"></i><br>Tidak ada gambar</span>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0">
+                    <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#uploadImageModal">
+                        <i class="fas fa-camera"></i> Ubah Gambar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kolom Info -->
+        <div class="col-md-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h2 th:text="${item.itemName}" class="card-title fw-bold text-dark mb-3">Nama Barang</h2>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">Kategori</small>
+                            <h5 th:text="${item.category}" class="text-info">Elektronik</h5>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Kondisi</small>
+                            <h5 th:text="${item.condition}" class="text-secondary">Baru</h5>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <small class="text-muted">Estimasi Harga</small>
+                        <h3 class="text-success fw-bold" th:text="'Rp ' + ${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')}">Rp 0</h3>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <small class="text-muted"><i class="fas fa-calendar-alt"></i> Tanggal Beli</small>
+                            <p class="fw-bold" th:text="${item.purchaseDate != null ? #temporals.format(item.purchaseDate, 'dd MMMM yyyy') : '-'}">
+                                1 Januari 2024
+                            </p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted"><i class="fas fa-map-marker-alt"></i> Lokasi Penyimpanan</small>
+                            <p class="fw-bold" th:text="${item.storageLocation ?: '-'}">
+                                Gudang
+                            </p>
+                        </div>
+                    </div>
+        
+                    <div class="mb-4">
+                        <small class="text-muted">Deskripsi</small>
+                        <p class="card-text bg-light p-3 rounded" th:text="${item.description}">Deskripsi barang...</p>
+                    </div>
+
+                    <div class="text-muted">
+                        <small><i class="far fa-clock"></i> Ditambahkan pada: <span th:text="${#temporals.format(item.createdAt, 'dd MMMM yyyy')}">Date</span></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL UPLOAD GAMBAR -->
+    <div class="modal fade" id="uploadImageModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form th:action="@{/items/edit-image}" method="post" enctype="multipart/form-data">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Upload Gambar Barang</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="id" th:value="${item.id}">
+                        <div class="mb-3">
+                            <label class="form-label">Pilih Gambar (JPG/PNG - Max 5MB)</label>
+                            <input type="file" name="imageFile" class="form-control" accept="image/*" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

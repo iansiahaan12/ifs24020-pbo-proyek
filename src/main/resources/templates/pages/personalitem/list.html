@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/base}">
+<head><title>Daftar Koleksi</title></head>
+<body>
+
+<!-- CSS KHUSUS -->
+<style layout:fragment="custom-css">
+    /* 1. Background Gradient */
+    body {
+        background: linear-gradient(135deg, #020024 0%, #090979 35%, #00d4ff 100%) !important;
+        min-height: 100vh;
+        background-attachment: fixed;
+    }
+
+    /* 2. Card Styling */
+    .card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    /* 3. Dark Mode Support */
+    [data-bs-theme="dark"] body { background: #0f172a !important; }
+    [data-bs-theme="dark"] .card { background-color: #1e293b; color: #fff; }
+
+    .modal-backdrop { z-index: 1040 !important; }
+    .modal { z-index: 1050 !important; }
+</style>
+
+<div layout:fragment="content">
+    
+    <!-- Header Navigasi -->
+    <div class="d-flex align-items-center mb-4">
+        <a th:href="@{/dashboard}" class="text-decoration-none text-white fw-bold d-flex align-items-center">
+            <span class="bg-white bg-opacity-25 p-2 rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                <i class="fas fa-arrow-left"></i>
+            </span>
+            Kembali ke Dashboard
+        </a>
+    </div>
+
+    <!-- Notifikasi -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show shadow-sm rounded-3">
+        <i class="fas fa-check-circle me-2"></i> <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm rounded-3">
+        <i class="fas fa-exclamation-triangle me-2"></i> <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="row g-4">
+        
+        <!-- KIRI: KARTU STATISTIK (HANYA KATEGORI) -->
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body p-4 text-center d-flex flex-column justify-content-center">
+                    
+                    <h5 class="text-secondary fw-bold mb-1">Statistik Kategori</h5>
+                    <p class="text-muted mb-2 small" id="totalItemsText">Total: 0 Barang</p>
+                    
+                    <!-- Harga Besar -->
+                    <h2 class="text-primary fw-bold mb-4" id="totalAssetValue">Rp 0</h2>
+                    
+                    <!-- Chart Kategori -->
+                    <div style="position: relative; height: 320px; width: 100%;">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KANAN: TABEL DAFTAR BARANG -->
+        <div class="col-lg-8">
+            <div class="card h-100 overflow-hidden">
+                
+                <!-- Header Card -->
+                <div class="card-header bg-white p-4 border-bottom-0 d-flex justify-content-between align-items-center">
+                    <h4 class="m-0 text-primary fw-bold">
+                        <i class="fas fa-list-ul me-2"></i>Daftar Barang
+                    </h4>
+                    <button class="btn btn-primary btn-lg shadow-sm px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#addItemModal" style="font-size: 0.9rem;">
+                        <i class="fas fa-plus me-2"></i>Tambah Barang
+                    </button>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="px-4 pb-4">
+                    <form action="/items" method="get">
+                        <div class="input-group input-group-lg shadow-sm">
+                            <span class="input-group-text bg-white border-end-0 ps-3"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" name="search" class="form-control border-start-0 ps-2" placeholder="Cari nama barang..." th:value="${param.search}" style="font-size: 0.95rem;">
+                            <button class="btn btn-primary px-4 fw-bold" type="submit">Cari</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tabel -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light text-secondary">
+                            <tr style="height: 55px;">
+                                <th class="ps-4 fw-bold">Nama Barang</th>
+                                <th class="fw-bold">Kategori</th>
+                                <th class="fw-bold">Lokasi</th>
+                                <th class="fw-bold">Harga</th>
+                                <th class="fw-bold">Kondisi</th>
+                                <th class="text-center fw-bold pe-4">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Empty State -->
+                            <tr th:if="${items.empty}">
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <div class="py-4">
+                                        <i class="fas fa-box-open fa-4x mb-3 text-light-emphasis"></i>
+                                        <p class="mb-0 fs-5">Belum ada barang koleksi.</p>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Data Rows -->
+                            <tr th:each="item : ${items}">
+                                <!-- Nama -->
+                                <td class="ps-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3 position-relative">
+                                            <img th:if="${item.imagePath != null}" th:src="@{/items/image/{file}(file=${item.imagePath})}" 
+                                                 class="rounded-3 shadow-sm border object-fit-cover" style="width: 55px; height: 55px;">
+                                            <div th:unless="${item.imagePath != null}" 
+                                                 class="bg-light rounded-3 border d-flex justify-content-center align-items-center text-secondary" 
+                                                 style="width: 55px; height: 55px;">
+                                                <i class="fas fa-cube fs-4"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark fs-6 mb-1" th:text="${item.itemName}">Item Name</div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Kategori -->
+                                <td>
+                                    <span class="badge bg-light text-dark border px-3 py-2 fw-normal" th:text="${item.category}">Kat</span>
+                                </td>
+
+                                <!-- Lokasi -->
+                                <td class="text-muted" th:text="${item.storageLocation ?: '-'}">Loc</td>
+
+                                <!-- Harga -->
+                                <td class="fw-bold text-dark fs-6" th:text="'Rp ' + ${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')}">Price</td>
+
+                                <!-- Kondisi -->
+                                <td>
+                                    <span class="badge rounded-pill px-3 py-2 fw-normal"
+                                          th:classappend="${item.condition == 'Baru' ? 'bg-success' : 
+                                                           (item.condition.contains('Baik') ? 'bg-info text-dark' : 
+                                                           (item.condition == 'Rusak' ? 'bg-danger' : 'bg-warning text-dark'))}" 
+                                          th:text="${item.condition}">Cond</span>
+                                </td>
+
+                                <!-- Aksi -->
+                                <td class="text-center pe-4">
+                                    <div class="btn-group shadow-sm" role="group">
+                                        <a th:href="@{/items/{id}(id=${item.id})}" class="btn btn-outline-primary btn-sm px-3" title="Detail"><i class="fas fa-eye"></i></a>
+                                        <button class="btn btn-outline-warning btn-sm btn-edit px-3" 
+                                            th:data-id="${item.id}"
+                                            th:data-name="${item.itemName}"
+                                            th:data-category="${item.category}"
+                                            th:data-price="${#numbers.formatDecimal(item.price, 0, 'NONE', 0, 'NONE')}"
+                                            th:data-condition="${item.condition}"
+                                            th:data-desc="${item.description}"
+                                            th:data-date="${item.purchaseDate}"
+                                            th:data-loc="${item.storageLocation}"
+                                            data-bs-toggle="modal" data-bs-target="#editItemModal"><i class="fas fa-pen"></i></button>
+                                        <button class="btn btn-outline-danger btn-sm btn-delete px-3" 
+                                                th:data-id="${item.id}" 
+                                                th:data-name="${item.itemName}"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>               
+             </div>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <!-- 1. MODAL TAMBAH (User Friendly) -->
+    <div class="modal fade" id="addItemModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <form th:action="@{/items/add}" method="post" th:object="${itemForm}">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title fw-bold">Tambah Barang</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nama Barang</label>
+                            <input type="text" name="itemName" class="form-control" placeholder="Contoh: MacBook Pro M1, Sepatu Nike" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Kategori</label>
+                                <input type="text" name="category" class="form-control" placeholder="Contoh: Elektronik" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Harga (Rp)</label>
+                                <input type="number" name="price" class="form-control" placeholder="Contoh: 15000000" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Tanggal Beli</label>
+                                <input type="date" name="purchaseDate" class="form-control">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Lokasi Simpan</label>
+                                <input type="text" name="storageLocation" class="form-control" placeholder="Contoh: Lemari Kaca">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Kondisi</label>
+                            <select name="condition" class="form-select">
+                                <option value="" disabled selected>Pilih kondisi...</option>
+                                <option value="Baru">Baru</option>
+                                <option value="Bekas (Baik)">Bekas (Baik)</option>
+                                <option value="Bekas (Perlu Perbaikan)">Bekas (Perlu Perbaikan)</option>
+                                <option value="Rusak">Rusak</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Deskripsi</label>
+                            <textarea name="description" class="form-control" rows="2" placeholder="Contoh: Warna hitam, garansi masih aktif..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary px-4">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. MODAL EDIT -->
+    <div class="modal fade" id="editItemModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <form th:action="@{/items/edit}" method="post">
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title fw-bold">Edit Barang</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <input type="hidden" id="editId" name="id">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nama Barang</label>
+                            <input type="text" id="editName" name="itemName" class="form-control" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Kategori</label>
+                                <input type="text" id="editCategory" name="category" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Harga (Rp)</label>
+                                <input type="number" id="editPrice" name="price" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Tanggal Beli</label>
+                                <input type="date" id="editDate" name="purchaseDate" class="form-control">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Lokasi Simpan</label>
+                                <input type="text" id="editLoc" name="storageLocation" class="form-control">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Kondisi</label>
+                            <select id="editCondition" name="condition" class="form-select">
+                                <option value="Baru">Baru</option>
+                                <option value="Bekas (Baik)">Bekas (Baik)</option>
+                                <option value="Bekas (Perlu Perbaikan)">Bekas (Perlu Perbaikan)</option>
+                                <option value="Rusak">Rusak</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Deskripsi</label>
+                            <textarea id="editDesc" name="description" class="form-control"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-warning px-4">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. MODAL HAPUS -->
+    <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-center border-0 shadow-lg p-3">
+                <div class="modal-body">
+                    <div class="mb-3 text-danger"><i class="fas fa-trash-alt fa-4x"></i></div>
+                    <h4 class="fw-bold text-danger">Hapus Barang?</h4>
+                    <p class="text-muted">Yakin ingin menghapus <strong id="deleteItemName" class="text-dark">Item</strong>?</p>
+                    <p class="text-muted">Tindakan ini merupakan tindakan permanen.</p>
+                    <form th:action="@{/items/delete}" method="post" class="mt-4">
+                        <input type="hidden" name="id" id="deleteInputId">
+                        <div class="d-flex justify-content-center gap-3">
+                            <button type="button" class="btn btn-light px-4 fw-bold" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-danger px-4 fw-bold">Ya, Hapus</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div> <!-- END CONTENT -->
+
+<!-- JAVASCRIPT -->
+<th:block layout:fragment="scripts">
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            
+            // --- DATA COLLECTOR ---
+            const categoryCount = {};
+            let hasCatData = false;
+            let totalItems = 0;
+            let totalMoney = 0;
+
+            const rows = document.querySelectorAll('table tbody tr');
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if(cells.length > 1) { 
+                    
+                    // 1. Kategori (Kolom index 1)
+                    const catName = cells[1].innerText.trim();
+                    if(catName) {
+                        categoryCount[catName] = (categoryCount[catName] || 0) + 1;
+                        hasCatData = true;
+                        totalItems++;
+                    }
+
+                    // 2. Harga (Kolom index 3)
+                    if(cells[3].innerText.includes('Rp')) {
+                        let clean = cells[3].innerText.replace(/[^0-9]/g, '');
+                        totalMoney += (parseFloat(clean) || 0);
+                    }
+                }
+            });
+
+            // Update Teks Total
+            if(document.getElementById('totalItemsText')) 
+                document.getElementById('totalItemsText').innerText = "Total: " + totalItems + " Barang";
+            
+            if(document.getElementById('totalAssetValue')) {
+                document.getElementById('totalAssetValue').innerText = new Intl.NumberFormat('id-ID', {
+                    style: 'currency', currency: 'IDR', minimumFractionDigits: 0
+                }).format(totalMoney);
+            }
+
+            // --- PALET WARNA ---
+            const colors = [
+                '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#6610f2'
+            ];
+
+            // --- CHART KATEGORI (DENGAN PERSENTASE DI TOOLTIP) ---
+            if (hasCatData) {
+                const ctxCat = document.getElementById('categoryChart');
+                if (ctxCat) {
+                    new Chart(ctxCat.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: Object.keys(categoryCount),
+                            datasets: [{
+                                data: Object.values(categoryCount),
+                                backgroundColor: colors,
+                                borderWidth: 2,
+                                borderColor: '#ffffff',
+                                borderRadius: 5, 
+                                hoverOffset: 4
+                            }]
+                        },
+                        options: { 
+                            responsive: true, 
+                            maintainAspectRatio: false,
+                            cutout: '65%',
+                            plugins: { 
+                                legend: { 
+                                    position: 'bottom', 
+                                    labels: { usePointStyle: true, padding: 20 } 
+                                },
+                                // MENAMPILKAN PERSENTASE DI TOOLTIP
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.label || '';
+                                            if (label) { label += ': '; }
+                                            
+                                            // Hitung Total Data di Dataset
+                                            let value = context.raw;
+                                            let total = context.chart._metasets[context.datasetIndex].total;
+                                            let percentage = Math.round((value / total) * 100) + '%';
+                                            
+                                            return label + value + ' Item (' + percentage + ')';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // --- MODAL TRIGGERS ---
+            document.querySelectorAll('.btn-edit').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.getElementById('editId').value = this.getAttribute('data-id');
+                    document.getElementById('editName').value = this.getAttribute('data-name');
+                    document.getElementById('editCategory').value = this.getAttribute('data-category');
+                    document.getElementById('editPrice').value = this.getAttribute('data-price');
+                    document.getElementById('editCondition').value = this.getAttribute('data-condition');
+                    document.getElementById('editDesc').value = this.getAttribute('data-desc');
+                    document.getElementById('editDate').value = this.getAttribute('data-date');
+                    document.getElementById('editLoc').value = this.getAttribute('data-loc');
+                });
+            });
+
+            document.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.getElementById('deleteInputId').value = this.getAttribute('data-id');
+                    document.getElementById('deleteItemName').innerText = this.getAttribute('data-name');
+                    new bootstrap.Modal(document.getElementById('deleteConfirmationModal')).show();
+                });
+            });
+        });
+    </script>
+    <script th:inline="javascript">
+        var shouldOpenAddModal = /*[[${addItemModalOpen ?: false}]]*/ false;
+        if (shouldOpenAddModal) new bootstrap.Modal(document.getElementById('addItemModal')).show();
+    </script>
+</th:block>
+</body>
+</html>
